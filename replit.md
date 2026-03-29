@@ -1,8 +1,8 @@
-# Workspace
+# Q-Chain — Quantum-Resistant Blockchain
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+pnpm workspace monorepo with a full-stack quantum-resistant blockchain app.
 
 ## Stack
 
@@ -14,85 +14,58 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
-- **Post-quantum crypto**: dilithium-crystals-js (CRYSTALS-Dilithium2 / ML-DSA-44)
-- **Frontend**: React + Vite, TailwindCSS, Framer Motion, React Query
+- **Build**: esbuild (`build.mjs`, CJS/ESM bundle)
+- **Post-quantum crypto**: `dilithium-crystals-js` (Dilithium3/ML-DSA-65)
+- **Hashing**: SHA3-512 (block hashes), SHA256 (public key fingerprints)
+- **Encryption**: AES-256-GCM (transaction data)
+- **Frontend**: React + Vite, TailwindCSS, React Query (cyberpunk theme)
 
-## Features
+## Architecture
 
-This is a quantum-resistant blockchain using CRYSTALS-Dilithium signatures:
-
-1. **Key Generator** — Generate Dilithium2 key pairs (1472-byte public key, post-quantum secure)
-2. **Wallet & Send** — Sign and submit transactions using Dilithium private keys
-3. **Blockchain Explorer** — View all blocks and their Dilithium-signed transactions
-4. **Mining Pool** — Mine new blocks with proof-of-work (difficulty=3)
-5. **Dashboard** — Network stats, chain validation (verifies all Dilithium signatures)
-
-## Structure
-
-```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   ├── api-server/         # Express API server (blockchain + Dilithium routes)
-│   └── quantum-blockchain/ # React frontend (dark cyberpunk theme)
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts
-├── pnpm-workspace.yaml
-├── tsconfig.base.json
-├── tsconfig.json
-└── package.json
+```
+artifacts/
+  api-server/         — Express backend (port via $PORT)
+  quantum-blockchain/ — React + Vite frontend
+lib/
+  api-spec/           — OpenAPI spec (openapi.yaml)
+  api-client-react/   — Orval-generated React Query hooks + customFetch (credentials: include)
+  db/                 — Drizzle ORM schema + migrations
 ```
 
-## TypeScript & Composite Projects
+## Key Design Decisions
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+### Public Key Storage Fix
+Dilithium3 public keys are 1760 bytes (3520 hex chars), exceeding PostgreSQL B-tree index limits (2704 bytes). Solution:
+- `users.public_key` — full key stored as TEXT (no unique constraint)
+- `users.public_key_hash` — SHA-256 fingerprint with UNIQUE index
+- All user lookups by public key use `hashPublicKey()` helper to query by fingerprint
 
-- **Always typecheck from the root** — run `pnpm run typecheck`
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in `references`
+### Post-Quantum Cryptography
+- Algorithm: CRYSTALS-Dilithium3 (ML-DSA-65) via `dilithium-crystals-js`
+  - Note: Library only supports kind=2 and kind=3; kind=5 unavailable
+- `dilithium-crystals-js` externalized in esbuild (requires WASM at runtime)
+- Keys auto-generated on registration, private key stored encrypted in DB
 
-## Root Scripts
+### Authentication
+- Session-based auth with `express-session` + PostgreSQL session store
+- `SESSION_SECRET` secret required (stored in Replit Secrets)
+- `bcrypt` (12 rounds) for password hashing, installed with `--ignore-scripts`
+- `credentials: "include"` on all frontend API calls
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+### Blockchain
+- Proof-of-Work (difficulty=3, SHA3-512 hashing)
+- Genesis block auto-created on first startup
+- Mining reward: 10 QDLT
+- Starting balance: 100 QDLT per new user
+- Transactions signed with Dilithium3, payload AES-256-GCM encrypted
 
-## Packages
+## Database Tables
 
-### `artifacts/api-server` (`@workspace/api-server`)
+- `users` — id, username, password_hash, public_key, public_key_hash, private_key, balance
+- `blocks` — id, index, hash, previous_hash, nonce, miner, timestamp, transactions (JSONB)
+- `pending_transactions` — id, sender, recipient, amount, signature, timestamp
 
-Express 5 API server with blockchain and Dilithium crypto routes.
+## Environment Secrets
 
-Routes:
-- `POST /api/keys/generate` — Generate Dilithium2 key pair
-- `GET /api/blockchain` — Get full blockchain
-- `GET /api/blockchain/validate` — Validate all signatures on chain
-- `POST /api/blockchain/mine` — Mine a new block (PoW, difficulty=3)
-- `GET /api/transactions/pending` — List pending transactions
-- `POST /api/transactions/sign` — Sign a transaction with Dilithium private key
-- `POST /api/transactions/submit` — Submit signed transaction (verifies signature)
-
-### `artifacts/quantum-blockchain` (`@workspace/quantum-blockchain`)
-
-React + Vite frontend with dark cyberpunk theme.
-
-### `lib/db` (`@workspace/db`)
-
-Database schema:
-- `blocks` — Mined blocks with all transaction data
-- `pending_transactions` — Unconfirmed transactions in the mempool
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from OpenAPI spec.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks from OpenAPI spec.
+- `SESSION_SECRET` — Express session signing key (required)
+- `DATABASE_URL` — PostgreSQL connection string (auto-provided by Replit)

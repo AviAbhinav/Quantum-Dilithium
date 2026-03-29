@@ -16,8 +16,10 @@ async function getDilithium(): Promise<DilithiumAPI> {
   return dilithium;
 }
 
-export const DILITHIUM_KIND = 2;
-export const ALGORITHM = "CRYSTALS-Dilithium2 (ML-DSA-44)";
+export const DILITHIUM_KIND = 3;
+export const ALGORITHM = "CRYSTALS-Dilithium3 (ML-DSA-65)";
+export const HASH_ALGORITHM = "SHA3-512";
+export const ENCRYPTION_ALGORITHM = "AES-256-GCM";
 
 export async function generateKeyPair(): Promise<{ publicKey: string; privateKey: string; algorithm: string }> {
   const dilithium = await getDilithium();
@@ -58,23 +60,44 @@ export function buildTransactionPayload(
   sender: string,
   recipient: string,
   amount: number,
-  data: string | undefined,
   timestamp: string
 ): string {
-  return JSON.stringify({ sender, recipient, amount, data: data ?? "", timestamp });
+  return JSON.stringify({ sender, recipient, amount, timestamp });
 }
 
 export function generateTransactionId(payload: string): string {
-  return crypto.createHash("sha256").update(payload).digest("hex");
+  return computeHash(payload);
 }
 
-export function computeHash(
-  index: number,
-  timestamp: string,
-  previousHash: string,
-  nonce: number,
-  transactions: object[]
-): string {
-  const content = JSON.stringify({ index, timestamp, previousHash, nonce, transactions });
-  return crypto.createHash("sha256").update(content).digest("hex");
+export function computeHash(...parts: unknown[]): string {
+  const content = parts.map(p => typeof p === "string" ? p : JSON.stringify(p)).join("|");
+  return crypto.createHash("sha3-512").update(content).digest("hex");
+}
+
+const AES_KEY_BYTES = 32;
+const GCM_IV_BYTES = 12;
+const GCM_AUTH_TAG_BYTES = 16;
+
+export function encryptData(data: string): { encrypted: string; key: string } {
+  const key = crypto.randomBytes(AES_KEY_BYTES);
+  const iv = crypto.randomBytes(GCM_IV_BYTES);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(data, "utf8"), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  const combined = Buffer.concat([iv, authTag, encrypted]);
+  return {
+    encrypted: combined.toString("base64"),
+    key: key.toString("hex"),
+  };
+}
+
+export function decryptData(encryptedBase64: string, keyHex: string): string {
+  const key = Buffer.from(keyHex, "hex");
+  const combined = Buffer.from(encryptedBase64, "base64");
+  const iv = combined.subarray(0, GCM_IV_BYTES);
+  const authTag = combined.subarray(GCM_IV_BYTES, GCM_IV_BYTES + GCM_AUTH_TAG_BYTES);
+  const encrypted = combined.subarray(GCM_IV_BYTES + GCM_AUTH_TAG_BYTES);
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+  decipher.setAuthTag(authTag);
+  return decipher.update(encrypted) + decipher.final("utf8");
 }

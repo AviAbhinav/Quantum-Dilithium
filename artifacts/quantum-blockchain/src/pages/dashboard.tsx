@@ -1,11 +1,13 @@
-import { Activity, Blocks, Hash, HardDrive, CheckCircle2, ShieldAlert } from "lucide-react"
+import { Activity, Blocks, Hash, HardDrive, CheckCircle2, ShieldAlert, Coins } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useGetBlockchain, useValidateBlockchain, useGetPendingTransactions } from "@workspace/api-client-react"
 import { useToast } from "@/hooks/use-toast"
 import { motion } from "framer-motion"
+import { useAuth } from "@/context/auth-context"
 
 export function Dashboard() {
+  const { user } = useAuth()
   const { data: blockchain, isLoading: isChainLoading, refetch: refetchChain } = useGetBlockchain()
   const { data: pending, isLoading: isPendingLoading } = useGetPendingTransactions()
   const { refetch: validateChain, isFetching: isValidating } = useValidateBlockchain({
@@ -76,8 +78,26 @@ export function Dashboard() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        className="grid grid-cols-1 md:grid-cols-4 gap-6"
       >
+        <motion.div variants={item} className="md:col-span-4">
+          <Card className="border-t-4 border-t-secondary bg-secondary/5">
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-mono text-muted-foreground uppercase tracking-widest mb-1">Operator Balance</p>
+                <div className="text-4xl font-mono font-bold text-secondary flex items-center gap-3">
+                  <Coins className="w-8 h-8" />
+                  {user?.balance || 0} <span className="text-2xl text-secondary/60">QDLT</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground font-mono">NODE IDENTIFIER</p>
+                <p className="font-mono text-sm">@{user?.username}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         <motion.div variants={item}>
           <Card className="h-full border-t-4 border-t-primary">
             <CardHeader className="pb-2">
@@ -115,7 +135,7 @@ export function Dashboard() {
           </Card>
         </motion.div>
 
-        <motion.div variants={item}>
+        <motion.div variants={item} className="md:col-span-2">
           <Card className="h-full border-t-4 border-t-accent">
             <CardHeader className="pb-2">
               <CardTitle className="text-muted-foreground text-sm flex items-center gap-2">
@@ -127,7 +147,7 @@ export function Dashboard() {
               <div className="text-4xl font-mono font-bold text-foreground">
                 {isChainLoading ? "--" : blockchain?.difficulty || 0}
               </div>
-              <p className="text-xs text-accent mt-2">Current mining target</p>
+              <p className="text-xs text-accent mt-2">Current mining target zeros</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -140,8 +160,8 @@ export function Dashboard() {
         className="mt-8 relative"
       >
         <div className="absolute inset-0 bg-primary/5 rounded-lg border border-primary/20 -z-10" />
-        <div className="p-8 flex items-center gap-6">
-          <div className="p-4 bg-primary/10 border border-primary/30 rounded-full">
+        <div className="p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
+          <div className="p-4 bg-primary/10 border border-primary/30 rounded-full shrink-0">
             <ShieldAlert className="w-10 h-10 text-primary" />
           </div>
           <div>

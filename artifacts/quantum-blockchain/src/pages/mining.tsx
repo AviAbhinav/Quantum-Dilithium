@@ -1,17 +1,15 @@
 import { useState } from "react"
 import { Pickaxe, HardDrive, Cpu, Terminal, Zap } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useGetPendingTransactions, useMineBlock } from "@workspace/api-client-react"
 import { useToast } from "@/hooks/use-toast"
-import { HexDisplay } from "@/components/hex-display"
 import { motion, AnimatePresence } from "framer-motion"
 import { format } from "date-fns"
+import { useAuth } from "@/context/auth-context"
 
 export function Mining() {
-  const [minerAddress, setMinerAddress] = useState("")
+  const { user, updateBalance } = useAuth()
   const [minedBlock, setMinedBlock] = useState<any>(null)
   
   const { data: pending, refetch: refetchPending } = useGetPendingTransactions()
@@ -21,11 +19,6 @@ export function Mining() {
   const pendingCount = pending?.count || 0
 
   const handleMine = async () => {
-    if (!minerAddress) {
-      toast({ title: "Address Required", description: "Provide a public key to receive block rewards.", variant: "destructive" })
-      return
-    }
-
     if (pendingCount === 0) {
       toast({ title: "No Transactions", description: "Mempool is empty. Nothing to mine.", variant: "default" })
       return
@@ -34,13 +27,19 @@ export function Mining() {
     try {
       setMinedBlock(null) // Reset display
       const block = await mineMutation.mutateAsync({
-        data: { minerAddress }
+        data: {} // Backend automatically uses logged-in user
       })
       setMinedBlock(block)
       refetchPending()
+      
+      // Give optimistic +10 QDLT update since they mined a block
+      if (user) {
+        updateBalance(user.balance + 10)
+      }
+
       toast({
         title: "Block Mined!",
-        description: `Successfully mined block #${block.index} with ${block.transactions.length} TXs.`,
+        description: `Successfully mined block #${block.index} with ${block.transactions.length} TXs. +10 QDLT awarded.`,
       })
     } catch (e: any) {
       toast({
@@ -64,7 +63,7 @@ export function Mining() {
         
         {/* Left Col: Controls */}
         <div className="space-y-6">
-          <Card className="border-accent/40 shadow-[0_0_20px_rgba(0,243,255,0.05)] relative overflow-visible">
+          <Card className="border-accent/40 shadow-[0_0_20px_rgba(0,243,255,0.05)] relative overflow-visible bg-card/60 backdrop-blur-xl">
             {/* Glowing top line */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent" />
             
@@ -92,24 +91,18 @@ export function Mining() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="minerAddress" className="font-mono text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <Zap className="w-3 h-3" />
-                  Reward Address (Public Key)
-                </Label>
-                <Input 
-                  id="minerAddress" 
-                  placeholder="Enter Hex..." 
-                  value={minerAddress}
-                  onChange={(e) => setMinerAddress(e.target.value)}
-                  className="border-accent/30 focus-visible:border-accent font-mono"
-                />
+              <div className="bg-accent/10 border border-accent/20 p-4 rounded-sm flex items-center gap-3">
+                <Zap className="w-6 h-6 text-accent shrink-0" />
+                <div>
+                  <div className="text-sm text-foreground font-bold font-mono">Mining Reward: 10 QDLT</div>
+                  <div className="text-xs text-muted-foreground mt-1">Paid directly to @{user?.username}</div>
+                </div>
               </div>
 
               <Button 
                 onClick={handleMine}
                 disabled={mineMutation.isPending || pendingCount === 0}
-                className="w-full h-14 text-lg font-bold tracking-widest bg-accent/20 text-accent border-accent shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:bg-accent/30 hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all"
+                className="w-full h-14 text-lg font-bold tracking-widest bg-accent/20 text-accent border border-accent shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:bg-accent/30 hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all"
               >
                 {mineMutation.isPending ? (
                   <span className="flex items-center gap-3">
@@ -129,8 +122,8 @@ export function Mining() {
         </div>
 
         {/* Right Col: Output/Terminal */}
-        <div className="bg-black border border-primary/20 flex flex-col h-full min-h-[400px] shadow-[inset_0_0_50px_rgba(0,0,0,1)] relative">
-          <div className="absolute top-0 left-0 right-0 h-6 bg-primary/10 border-b border-primary/20 flex items-center px-4">
+        <div className="bg-black border border-primary/20 flex flex-col h-full min-h-[400px] shadow-[inset_0_0_50px_rgba(0,0,0,1)] relative rounded-md overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-6 bg-primary/10 border-b border-primary/20 flex items-center px-4 z-10">
             <div className="flex gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-destructive/50"></div>
               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>

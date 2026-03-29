@@ -1,33 +1,31 @@
-import { useState } from "react"
-import { KeyRound, Shield, AlertTriangle } from "lucide-react"
+import { KeyRound, Shield, Coins, History, Activity } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { HexDisplay } from "@/components/hex-display"
-import { useGenerateKeyPair, type KeyPair } from "@workspace/api-client-react"
-import { useToast } from "@/hooks/use-toast"
-import { motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/context/auth-context"
+import { useGetBlockchain } from "@workspace/api-client-react"
+import { truncateHex } from "@/lib/utils"
+import { format } from "date-fns"
 
-export function KeyGenerator() {
-  const [keys, setKeys] = useState<KeyPair | null>(null)
-  const generateMutation = useGenerateKeyPair()
-  const { toast } = useToast()
+export function MyWallet() {
+  const { user } = useAuth()
+  const { data: blockchain } = useGetBlockchain()
 
-  const handleGenerate = async () => {
-    try {
-      const data = await generateMutation.mutateAsync()
-      setKeys(data)
-      toast({
-        title: "Keys Generated",
-        description: `Successfully created ${data.algorithm} key pair.`,
+  // Extract transaction history for user
+  const transactions: any[] = []
+  if (blockchain?.chain && user?.publicKey) {
+    blockchain.chain.forEach(block => {
+      block.transactions.forEach((tx: any) => {
+        if (tx.sender === user.publicKey || tx.recipient === user.publicKey) {
+          transactions.push({ ...tx, timestamp: block.timestamp, blockIndex: block.index })
+        }
       })
-    } catch (e: any) {
-      toast({
-        title: "Generation Failed",
-        description: e.message || "Failed to generate keys",
-        variant: "destructive"
-      })
-    }
+    })
   }
+
+  // Sort by newest first
+  transactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+  if (!user) return null;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -35,43 +33,27 @@ export function KeyGenerator() {
         <h1 className="text-3xl font-mono font-bold text-foreground">
           IDENTITY <span className="text-primary glitch-text">MATRIX</span>
         </h1>
-        <p className="text-muted-foreground mt-2 font-mono">Generate post-quantum cryptographic credentials.</p>
+        <p className="text-muted-foreground mt-2 font-mono">Your post-quantum cryptographic credentials and activity.</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-1 space-y-6">
-          <Card>
+          <Card className="border-t-4 border-t-primary bg-card/60 backdrop-blur-xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-primary" />
-                CRYSTALS-Dilithium
+                <Coins className="w-5 h-5 text-primary" />
+                Total Balance
               </CardTitle>
-              <CardDescription>
-                NIST ML-DSA Standard
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm text-muted-foreground font-sans">
-              <p>
-                Dilithium is a lattice-based digital signature scheme that is strongly secure against both classical and quantum computers.
-              </p>
-              <div className="bg-destructive/10 border border-destructive/30 p-3 flex gap-3 text-destructive">
-                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-                <p className="text-xs font-mono leading-relaxed">
-                  NEVER share your private key. It is mathematically impossible to recover lost keys. Store them securely offline.
-                </p>
+            <CardContent>
+              <div className="text-4xl font-mono font-bold text-foreground mb-1">
+                {user.balance} QDLT
               </div>
-              <Button 
-                onClick={handleGenerate} 
-                disabled={generateMutation.isPending}
-                className="w-full mt-4"
-                size="lg"
-              >
-                {generateMutation.isPending ? "COMPUTING MATRIX..." : "GENERATE NEW KEYS"}
-              </Button>
+              <p className="text-sm text-muted-foreground font-mono mt-4">Node: @{user.username}</p>
             </CardContent>
           </Card>
           
-          <div className="flex justify-center mt-4 opacity-50 hover:opacity-100 transition-opacity">
+          <div className="flex justify-center mt-8 opacity-60 hover:opacity-100 transition-opacity">
              <img 
                src={`${import.meta.env.BASE_URL}images/quantum-core.png`} 
                alt="Quantum Core" 
@@ -80,56 +62,67 @@ export function KeyGenerator() {
           </div>
         </div>
 
-        <div className="md:col-span-2 relative min-h-[400px]">
-          <AnimatePresence mode="wait">
-            {keys ? (
-              <motion.div
-                key="keys"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4 }}
-                className="space-y-6 h-full"
-              >
-                <Card className="border-secondary/30 shadow-[0_0_30px_rgba(188,19,254,0.1)]">
-                  <CardHeader className="bg-secondary/5 pb-4">
-                    <CardTitle className="text-secondary flex items-center gap-2">
-                      <KeyRound className="w-5 h-5" />
-                      Public Identifier (Address)
-                    </CardTitle>
-                    <CardDescription>Share this to receive funds</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <HexDisplay label="Dilithium Public Key" value={keys.publicKey} />
-                  </CardContent>
-                </Card>
+        <div className="md:col-span-2 space-y-6">
+          <Card className="border-secondary/30 shadow-[0_0_30px_rgba(188,19,254,0.1)] bg-card/60 backdrop-blur-xl">
+            <CardHeader className="bg-secondary/5 pb-4">
+              <CardTitle className="text-secondary flex items-center gap-2">
+                <KeyRound className="w-5 h-5" />
+                Public Identifier (Address)
+              </CardTitle>
+              <CardDescription>Share this to receive funds</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <HexDisplay label="Dilithium Public Key" value={user.publicKey} />
+              
+              <div className="mt-6 flex items-start gap-3 p-3 bg-secondary/10 border border-secondary/20 rounded">
+                <Shield className="w-5 h-5 text-secondary shrink-0" />
+                <p className="text-xs text-secondary/90 font-mono leading-relaxed">
+                  Your private key is held securely on the node and never transmitted. All transactions are automatically signed locally before broadcast.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-                <Card className="border-destructive/30 shadow-[0_0_30px_rgba(255,0,0,0.1)]">
-                  <CardHeader className="bg-destructive/5 pb-4">
-                    <CardTitle className="text-destructive flex items-center gap-2">
-                      <KeyRound className="w-5 h-5" />
-                      Private Key
-                    </CardTitle>
-                    <CardDescription className="text-destructive/80">TOP SECRET - Required for signing transactions</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <HexDisplay label="Dilithium Private Key" value={keys.privateKey} />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 flex flex-col items-center justify-center border border-dashed border-primary/20 bg-background/50 backdrop-blur-sm"
-              >
-                <KeyRound className="w-16 h-16 text-primary/20 mb-4" />
-                <p className="text-muted-foreground font-mono">Awaiting key generation sequence...</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <Card className="border-primary/20 bg-card/60 backdrop-blur-xl">
+            <CardHeader className="border-b border-primary/10">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <History className="w-5 h-5 text-primary" />
+                Recent Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {transactions.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground font-mono text-sm flex flex-col items-center">
+                  <Activity className="w-8 h-8 mb-2 opacity-50" />
+                  No transactions found on the ledger.
+                </div>
+              ) : (
+                <div className="divide-y divide-primary/10">
+                  {transactions.slice(0, 10).map((tx, idx) => {
+                    const isReceived = tx.recipient === user.publicKey;
+                    return (
+                      <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${isReceived ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <div>
+                            <div className="font-mono text-sm">
+                              {isReceived ? 'Received from' : 'Sent to'} {truncateHex(isReceived ? tx.sender : tx.recipient)}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Block #{tx.blockIndex} • {format(new Date(tx.timestamp), "MMM dd, HH:mm")}
+                            </div>
+                          </div>
+                        </div>
+                        <div className={`font-mono font-bold ${isReceived ? 'text-green-500' : 'text-red-500'}`}>
+                          {isReceived ? '+' : '-'}{tx.amount} QDLT
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

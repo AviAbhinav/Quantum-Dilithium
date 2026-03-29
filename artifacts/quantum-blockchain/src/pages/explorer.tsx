@@ -1,13 +1,19 @@
 import { useState } from "react"
-import { Database, Link2, Hash, Clock, Box } from "lucide-react"
-import { useGetBlockchain } from "@workspace/api-client-react"
+import { Database, Link2, Hash, Clock, Box, User as UserIcon } from "lucide-react"
+import { useGetBlockchain, useListUsers } from "@workspace/api-client-react"
 import { truncateHex } from "@/lib/utils"
 import { format } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function Explorer() {
   const { data: blockchain, isLoading, error } = useGetBlockchain()
+  const { data: usersData } = useListUsers()
   const [expandedBlock, setExpandedBlock] = useState<number | null>(null)
+
+  const getUserName = (pubKey: string) => {
+    const u = usersData?.users.find(u => u.publicKey === pubKey);
+    return u ? `@${u.username}` : "Unknown";
+  }
 
   if (isLoading) {
     return (
@@ -107,19 +113,27 @@ export function Explorer() {
                               <div className="absolute top-0 left-0 w-1 h-full bg-primary/50 group-hover/tx:bg-primary transition-colors" />
                               <div className="flex justify-between items-start border-b border-primary/10 pb-2">
                                 <span className="text-muted-foreground">ID: <span className="text-foreground">{truncateHex(tx.id)}</span></span>
-                                <span className="text-primary font-bold">{tx.amount} QTC</span>
+                                <span className="text-primary font-bold">{tx.amount} QDLT</span>
                               </div>
-                              <div className="grid grid-cols-2 gap-2 text-[10px]">
+                              <div className="grid grid-cols-2 gap-2 text-[10px] mt-2">
                                 <div>
                                   <span className="text-muted-foreground block mb-1">FROM</span>
-                                  <span className="text-foreground/80 truncate block">{truncateHex(tx.sender)}</span>
+                                  <div className="flex items-center gap-1 text-foreground/90">
+                                    <UserIcon className="w-3 h-3" />
+                                    <span>{getUserName(tx.sender)}</span>
+                                  </div>
+                                  <span className="text-foreground/50 truncate block mt-1">{truncateHex(tx.sender)}</span>
                                 </div>
                                 <div>
                                   <span className="text-muted-foreground block mb-1">TO</span>
-                                  <span className="text-foreground/80 truncate block">{truncateHex(tx.recipient)}</span>
+                                  <div className="flex items-center gap-1 text-foreground/90">
+                                    <UserIcon className="w-3 h-3" />
+                                    <span>{getUserName(tx.recipient)}</span>
+                                  </div>
+                                  <span className="text-foreground/50 truncate block mt-1">{truncateHex(tx.recipient)}</span>
                                 </div>
                               </div>
-                              <div className="pt-2">
+                              <div className="pt-2 mt-2 border-t border-primary/5">
                                 <span className="text-muted-foreground block mb-1">DILITHIUM SIG</span>
                                 <span className="text-secondary/70 truncate block text-[9px] bg-secondary/5 p-1 border border-secondary/10">{truncateHex(tx.signature, 20, 20)}</span>
                               </div>

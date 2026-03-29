@@ -6,9 +6,7 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface ValidationResult {
-  valid: boolean;
-  message: string;
-  checks: string[];
-  invalidBlocks: number[];
+export interface LoginRequest {
+  username: string;
+  password: string;
 }

@@ -6,9 +6,12 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface ValidationResult {
-  valid: boolean;
-  message: string;
-  checks: string[];
-  invalidBlocks: number[];
+export interface RegisterRequest {
+  /**
+   * @minLength 3
+   * @maxLength 32
+   */
+  username: string;
+  /** @minLength 6 */
+  password: string;
 }

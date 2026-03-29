@@ -1,16 +1,18 @@
 openapi: 3.1.0
 info:
   title: Api
-  version: 0.1.0
-  description: Quantum-Resistant Blockchain API using CRYSTALS-Dilithium signatures
+  version: 0.2.0
+  description: Quantum-Resistant Blockchain API — CRYSTALS-Dilithium5, AES-256-GCM, SHA3-512
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
-  - name: keys
-    description: Dilithium key operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User account operations
   - name: blockchain
     description: Blockchain operations
   - name: transactions
@@ -21,7 +23,6 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -30,26 +31,132 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
-  /keys/generate:
+  /auth/register:
     post:
-      operationId: generateKeyPair
-      tags: [keys]
-      summary: Generate a Dilithium key pair
-      description: Generates a new CRYSTALS-Dilithium post-quantum key pair
+      operationId: register
+      tags: [auth]
+      summary: Register a new user account
+      description: Creates a new user, generates Dilithium5 key pair, grants 100 starting tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
         "200":
-          description: Key pair generated
+          description: Registered successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/KeyPair"
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error or username taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (for recipient selection)
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersListResponse"
+
+  /users/{publicKey}/balance:
+    get:
+      operationId: getUserBalance
+      tags: [users]
+      summary: Get balance for a user by public key
+      parameters:
+        - name: publicKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BalanceResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /blockchain:
     get:
       operationId: getBlockchain
       tags: [blockchain]
       summary: Get the full blockchain
-      description: Returns all blocks in the chain
       responses:
         "200":
           description: Blockchain data
@@ -62,8 +169,7 @@ paths:
     get:
       operationId: validateBlockchain
       tags: [blockchain]
-      summary: Validate the blockchain
-      description: Verifies the integrity and all Dilithium signatures on chain
+      summary: Validate the blockchain integrity and all Dilithium5 signatures
       responses:
         "200":
           description: Validation result
@@ -76,8 +182,7 @@ paths:
     post:
       operationId: mineBlock
       tags: [blockchain]
-      summary: Mine a new block
-      description: Mines a new block containing pending transactions
+      summary: Mine a new block (requires authentication)
       requestBody:
         required: true
         content:
@@ -86,13 +191,19 @@ paths:
               $ref: "#/components/schemas/MineBlockRequest"
       responses:
         "200":
-          description: Block mined
+          description: Block mined successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Block"
         "400":
-          description: No pending transactions or invalid request
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
           content:
             application/json:
               schema:
@@ -103,7 +214,6 @@ paths:
       operationId: getPendingTransactions
       tags: [transactions]
       summary: Get pending transactions
-      description: Returns all transactions waiting to be mined
       responses:
         "200":
           description: Pending transactions
@@ -116,8 +226,8 @@ paths:
     post:
       operationId: submitTransaction
       tags: [transactions]
-      summary: Submit a signed transaction
-      description: Submit a Dilithium-signed transaction to the pending pool
+      summary: Submit a transaction (requires authentication)
+      description: Signs and submits a transaction using the logged-in user's Dilithium5 keys
       requestBody:
         required: true
         content:
@@ -126,39 +236,19 @@ paths:
               $ref: "#/components/schemas/SubmitTransactionRequest"
       responses:
         "200":
-          description: Transaction accepted
+          description: Transaction submitted
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TransactionResponse"
         "400":
-          description: Invalid signature or request
+          description: Insufficient balance or invalid request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-
-  /transactions/sign:
-    post:
-      operationId: signTransaction
-      tags: [transactions]
-      summary: Sign transaction data with a Dilithium private key
-      description: Signs transaction payload with the provided Dilithium private key
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SignTransactionRequest"
-      responses:
-        "200":
-          description: Signed transaction
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SignedTransactionResponse"
-        "400":
-          description: Invalid request
+        "401":
+          description: Not authenticated
           content:
             application/json:
               schema:
@@ -171,25 +261,82 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
-    KeyPair:
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+        password:
+          type: string
+          minLength: 6
+      required: [username, password]
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserProfile"
+        message:
+          type: string
+      required: [user, message]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        publicKey:
+          type: string
+          description: Dilithium5 public key (hex)
+        balance:
+          type: number
+          description: Current token balance
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, username, publicKey, balance, createdAt]
+
+    UsersListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserProfile"
+      required: [users]
+
+    BalanceResponse:
       type: object
       properties:
         publicKey:
           type: string
-          description: Hex-encoded Dilithium public key
-        privateKey:
+        username:
           type: string
-          description: Hex-encoded Dilithium private key
-        algorithm:
+        balance:
+          type: number
+      required: [publicKey, username, balance]
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
           type: string
-          description: The post-quantum algorithm used
-      required:
-        - publicKey
-        - privateKey
-        - algorithm
+      required: [message]
 
     Transaction:
       type: object
@@ -199,27 +346,27 @@ components:
         sender:
           type: string
           description: Sender public key (hex)
+        senderUsername:
+          type: string
         recipient:
           type: string
-          description: Recipient public key or address (hex)
+          description: Recipient public key (hex)
+        recipientUsername:
+          type: string
         amount:
           type: number
-        data:
+        encryptedData:
           type: string
-          description: Optional arbitrary data payload
+          description: AES-256-GCM encrypted transaction metadata
         signature:
           type: string
-          description: Dilithium signature (hex)
+          description: Dilithium5 signature (hex)
         timestamp:
           type: string
           format: date-time
-      required:
-        - id
-        - sender
-        - recipient
-        - amount
-        - signature
-        - timestamp
+        verified:
+          type: boolean
+      required: [id, sender, recipient, amount, signature, timestamp]
 
     Block:
       type: object
@@ -235,21 +382,17 @@ components:
             $ref: "#/components/schemas/Transaction"
         previousHash:
           type: string
+          description: SHA3-512 hash of previous block
         hash:
           type: string
+          description: SHA3-512 hash of this block
         nonce:
           type: integer
         minerAddress:
           type: string
-          description: Public key of the miner
-      required:
-        - index
-        - timestamp
-        - transactions
-        - previousHash
-        - hash
-        - nonce
-        - minerAddress
+        minerUsername:
+          type: string
+      required: [index, timestamp, transactions, previousHash, hash, nonce, minerAddress]
 
     BlockchainResponse:
       type: object
@@ -262,10 +405,7 @@ components:
           type: integer
         difficulty:
           type: integer
-      required:
-        - chain
-        - length
-        - difficulty
+      required: [chain, length, difficulty]
 
     ValidationResult:
       type: object
@@ -274,100 +414,37 @@ components:
           type: boolean
         message:
           type: string
+        checks:
+          type: array
+          items:
+            type: string
         invalidBlocks:
           type: array
           items:
             type: integer
-          description: Indices of invalid blocks (if any)
-      required:
-        - valid
-        - message
-        - invalidBlocks
+      required: [valid, message, checks, invalidBlocks]
 
     MineBlockRequest:
       type: object
       properties:
-        minerAddress:
+        minerPublicKey:
           type: string
-          description: Public key of miner to receive reward
-      required:
-        - minerAddress
+          description: Public key of miner (optional, uses logged-in user if omitted)
+      required: []
 
     SubmitTransactionRequest:
       type: object
       properties:
-        sender:
+        recipientPublicKey:
           type: string
-        recipient:
-          type: string
+          description: Recipient's Dilithium5 public key
         amount:
           type: number
-        data:
+          description: Amount of tokens to transfer
+        note:
           type: string
-        signature:
-          type: string
-          description: Dilithium signature over the transaction payload (hex)
-        publicKey:
-          type: string
-          description: Sender public key for signature verification (hex)
-        timestamp:
-          type: string
-          format: date-time
-      required:
-        - sender
-        - recipient
-        - amount
-        - signature
-        - publicKey
-        - timestamp
-
-    SignTransactionRequest:
-      type: object
-      properties:
-        sender:
-          type: string
-          description: Sender public key (hex)
-        recipient:
-          type: string
-        amount:
-          type: number
-        data:
-          type: string
-        privateKey:
-          type: string
-          description: Sender Dilithium private key (hex) for signing
-      required:
-        - sender
-        - recipient
-        - amount
-        - privateKey
-
-    SignedTransactionResponse:
-      type: object
-      properties:
-        sender:
-          type: string
-        recipient:
-          type: string
-        amount:
-          type: number
-        data:
-          type: string
-        signature:
-          type: string
-          description: Dilithium signature (hex)
-        publicKey:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
-      required:
-        - sender
-        - recipient
-        - amount
-        - signature
-        - publicKey
-        - timestamp
+          description: Optional transaction note (will be encrypted with AES-256-GCM)
+      required: [recipientPublicKey, amount]
 
     TransactionResponse:
       type: object
@@ -378,10 +455,9 @@ components:
           type: string
         message:
           type: string
-      required:
-        - success
-        - transactionId
-        - message
+        newBalance:
+          type: number
+      required: [success, transactionId, message, newBalance]
 
     PendingTransactionsResponse:
       type: object
@@ -392,9 +468,7 @@ components:
             $ref: "#/components/schemas/Transaction"
         count:
           type: integer
-      required:
-        - transactions
-        - count
+      required: [transactions, count]
 
     ErrorResponse:
       type: object
@@ -403,6 +477,4 @@ components:
           type: string
         message:
           type: string
-      required:
-        - error
-        - message
+      required: [error, message]

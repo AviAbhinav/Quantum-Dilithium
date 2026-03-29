@@ -5,10 +5,8 @@
  * Quantum-Resistant Blockchain API — CRYSTALS-Dilithium5, AES-256-GCM, SHA3-512
  * OpenAPI spec version: 0.2.0
  */
+import type { UserProfile } from "./userProfile";
 
-export interface ValidationResult {
-  valid: boolean;
-  message: string;
-  checks: string[];
-  invalidBlocks: number[];
+export interface UsersListResponse {
+  users: UserProfile[];
 }

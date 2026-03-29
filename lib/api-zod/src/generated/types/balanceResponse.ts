@@ -6,9 +6,8 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface ValidationResult {
-  valid: boolean;
-  message: string;
-  checks: string[];
-  invalidBlocks: number[];
+export interface BalanceResponse {
+  publicKey: string;
+  username: string;
+  balance: number;
 }

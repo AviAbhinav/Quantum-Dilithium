@@ -62,60 +62,60 @@
 
 :root {
   /* Enforce Dark Mode / Cyberpunk theme natively on root */
-  --background: 220 50% 4%; /* Very deep dark blue/black */
-  --foreground: 180 20% 90%; /* Slight cyan tint to white */
+  --background: 222 47% 11%;
+  --foreground: 210 40% 95%;
 
-  --card: 220 50% 6%;
-  --card-foreground: 180 20% 90%;
-  --card-border: 180 100% 25%; /* Dim cyan */
+  --card: 222 47% 14%;
+  --card-foreground: 210 40% 95%;
+  --card-border: 222 47% 22%;
 
-  --popover: 220 50% 6%;
-  --popover-foreground: 180 20% 90%;
-  --popover-border: 180 100% 25%;
+  --popover: 222 47% 14%;
+  --popover-foreground: 210 40% 95%;
+  --popover-border: 222 47% 22%;
 
-  /* Neon Cyan */
-  --primary: 180 100% 50%;
-  --primary-foreground: 220 50% 4%;
-  --primary-border: 180 100% 40%;
+  --primary: 186 100% 50%;
+  --primary-foreground: 222 47% 11%;
+  --primary-border: 186 100% 40%;
 
-  /* Neon Purple/Pink */
-  --secondary: 283 99% 54%;
-  --secondary-foreground: 0 0% 100%;
-  --secondary-border: 283 99% 44%;
+  --secondary: 270 60% 60%;
+  --secondary-foreground: 210 40% 95%;
+  --secondary-border: 270 60% 50%;
 
-  --muted: 215 30% 12%;
-  --muted-foreground: 180 15% 60%;
-  --muted-border: 215 30% 20%;
+  --muted: 222 47% 20%;
+  --muted-foreground: 210 40% 70%;
+  --muted-border: 222 47% 22%;
 
-  /* Accent uses a bright electric blue */
-  --accent: 195 100% 60%;
-  --accent-foreground: 220 50% 4%;
-  --accent-border: 195 100% 50%;
+  --accent: 186 100% 50%;
+  --accent-foreground: 222 47% 11%;
+  --accent-border: 186 100% 40%;
 
-  /* High contrast red/pink for destructive */
   --destructive: 340 100% 60%;
-  --destructive-foreground: 0 0% 100%;
+  --destructive-foreground: 210 40% 95%;
   --destructive-border: 340 100% 50%;
 
-  --border: 180 100% 20%;
-  --input: 215 30% 15%;
-  --ring: 180 100% 50%;
+  --border: 222 47% 22%;
+  --input: 222 47% 14%;
+  --ring: 186 100% 50%;
 
-  --sidebar: 220 60% 3%;
-  --sidebar-foreground: 180 20% 80%;
-  --sidebar-border: 180 100% 20%;
-  --sidebar-primary: 180 100% 50%;
-  --sidebar-primary-foreground: 220 50% 4%;
-  --sidebar-primary-border: 180 100% 40%;
-  --sidebar-accent: 215 30% 15%;
-  --sidebar-accent-foreground: 180 100% 60%;
-  --sidebar-accent-border: 215 30% 25%;
-  --sidebar-ring: 180 100% 50%;
+  --sidebar: 222 47% 8%;
+  --sidebar-foreground: 210 40% 95%;
+  --sidebar-border: 222 47% 22%;
+  --sidebar-primary: 186 100% 50%;
+  --sidebar-primary-foreground: 222 47% 11%;
+  --sidebar-primary-border: 186 100% 40%;
+  --sidebar-accent: 222 47% 20%;
+  --sidebar-accent-foreground: 186 100% 50%;
+  --sidebar-accent-border: 222 47% 25%;
+  --sidebar-ring: 186 100% 50%;
 
   --radius: 0rem; /* Brutalist/tech aesthetic prefers sharp corners */
 
-  --shadow-neon-cyan: 0 0 10px 0 hsl(180 100% 50% / 0.3), 0 0 20px 0 hsl(180 100% 50% / 0.2);
-  --shadow-neon-purple: 0 0 10px 0 hsl(283 99% 54% / 0.3), 0 0 20px 0 hsl(283 99% 54% / 0.2);
+  --shadow-neon-cyan: 0 0 10px 0 hsl(186 100% 50% / 0.3), 0 0 20px 0 hsl(186 100% 50% / 0.2);
+  --shadow-neon-purple: 0 0 10px 0 hsl(270 60% 60% / 0.3), 0 0 20px 0 hsl(270 60% 60% / 0.2);
+}
+
+.dark {
+  --background: 222 47% 8%;
 }
 
 @layer base {
