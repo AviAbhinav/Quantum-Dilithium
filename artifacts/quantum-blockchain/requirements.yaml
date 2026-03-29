@@ -1,0 +1,18 @@
+packages:
+  "framer-motion": "For smooth, futuristic page transitions and interactive elements"
+  "date-fns": "For formatting blockchain timestamps"
+  "lucide-react": "For tech-themed icons"
+  "clsx": "For dynamic class merging"
+  "tailwind-merge": "For merging tailwind classes safely"
+
+images:
+  - path: "artifacts/quantum-blockchain/public/images/cyberpunk-bg.png"
+    description: "Dark cyberpunk grid background, deep black and dark navy with subtle glowing neon cyan and purple data lines, abstract digital circuitry, macro view, moody and cinematic, high quality 8k"
+    aspect_ratio: "16:9"
+  - path: "artifacts/quantum-blockchain/public/images/quantum-core.png"
+    description: "Abstract glowing quantum computer core, floating in dark space, bright cyan laser light, fractal geometry, highly detailed, sci-fi"
+    aspect_ratio: "1:1"
+
+notes:
+  - "The app uses a dark, neon-accented cyberpunk theme with 'Space Grotesk' and 'Orbitron' fonts."
+  - "All API interactions use the pre-generated hooks from @workspace/api-client-react."
