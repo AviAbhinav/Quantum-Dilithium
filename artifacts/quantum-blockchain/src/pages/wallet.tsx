@@ -50,7 +50,7 @@ export function Wallet() {
       const res = await fetch("/api/transactions/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // THIS IS THE MAGIC FIX
+        credentials: "include", // THIS IS THE MAGIC FIX 
         body: JSON.stringify({
           recipientPublicKey: formData.recipient,
           amount: parseFloat(formData.amount),
