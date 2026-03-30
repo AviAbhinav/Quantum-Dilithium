@@ -50,7 +50,7 @@ app.use(
     saveUninitialized: false, // Prevents creating empty sessions
     cookie: {
       httpOnly: true,
-      secure: true,      // 2. FORCE TRUE: Required for Replit's HTTPS
+      secure: true,      // 2. FORCE TRUE: Required for Replit's HTTPS 
       sameSite: "none",  // 3. FORCE "none": Required for cross-site cookie usage
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
