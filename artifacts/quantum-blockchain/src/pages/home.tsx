@@ -27,7 +27,7 @@ export function Home() {
             <Button variant="ghost" onClick={() => setLocation("/login")}>
               Login
             </Button>
-            <Button className="bg-primary hover:bg-primary/90" onClick={() => setLocation("/register")}>
+            <Button className="bg-primary hover:bg-primary/90 text-black" onClick={() => setLocation("/register")}>
               Sign Up
             </Button>
           </div>
@@ -49,7 +49,7 @@ export function Home() {
           </p>
 
           <div className="flex gap-4 justify-center pt-4">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8" onClick={() => setLocation("/register")}>
+            <Button size="lg" className="bg-primary hover:bg-primary/90 text-black text-lg px-8" onClick={() => setLocation("/register")}>
               Get Started <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 border-primary/30" onClick={() => setLocation("/login")}>
@@ -144,7 +144,7 @@ export function Home() {
           <p className="text-muted-foreground text-lg">
             Start your quantum-resistant identity today. No traditional passwords, no private key uploads—just pure cryptography.
           </p>
-          <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-12" onClick={() => setLocation("/register")}>
+          <Button size="lg" className="bg-primary hover:bg-primary/90 text-black text-lg px-12" onClick={() => setLocation("/register")}>
             Create Account
           </Button>
         </motion.div>
