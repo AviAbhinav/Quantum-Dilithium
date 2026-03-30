@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useSubmitTransaction, useListUsers } from "@workspace/api-client-react"
+import { useListUsers } from "@workspace/api-client-react"
 import { useToast } from "@/hooks/use-toast"
 import { motion } from "framer-motion"
 import { useAuth } from "@/context/auth-context"
@@ -20,6 +20,8 @@ import { truncateHex } from "@/lib/utils"
 export function Wallet() {
   const { user, updateBalance } = useAuth()
   const { data: usersData } = useListUsers()
+    
+  const [isPending, setIsPending] = useState(false)
   
   const [formData, setFormData] = useState({
     recipient: "",
@@ -27,7 +29,6 @@ export function Wallet() {
     data: ""
   })
   
-  const submitMutation = useSubmitTransaction()
   const { toast } = useToast()
 
   const isPending = submitMutation.isPending
@@ -42,14 +43,26 @@ export function Wallet() {
       return
     }
 
+    setIsPending(true) // Start the loading animation
+
     try {
-      const result = await submitMutation.mutateAsync({
-        data: {
+      // Use native fetch to force session cookies to be included
+      const res = await fetch("/api/transactions/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // THIS IS THE MAGIC FIX
+        body: JSON.stringify({
           recipientPublicKey: formData.recipient,
           amount: parseFloat(formData.amount),
           note: formData.data || undefined
-        }
-      })
+        })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.message || "Failed to process transaction");
+      }
 
       if (result.success && result.newBalance !== undefined) {
         updateBalance(result.newBalance)
@@ -61,12 +74,13 @@ export function Wallet() {
       }
       
     } catch (err: any) {
-      const errorMsg = err?.data?.message || err.message || "Failed to process transaction";
       toast({
         title: "Transfer Failed",
-        description: errorMsg,
+        description: err.message || "Failed to process transaction",
         variant: "destructive"
       })
+    } finally {
+      setIsPending(false) // Stop the loading animation
     }
   }
 
