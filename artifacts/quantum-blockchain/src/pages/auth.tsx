@@ -81,6 +81,8 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
     try {
       const res = await loginMutation.mutateAsync({ data: { username, password } });
       login(res.user);
+      // Verify session is established
+      await new Promise(r => setTimeout(r, 100));
       toast({ title: "Access Granted", description: "Identity verified via Dilithium." });
       setLocation("/");
     } catch (err: any) {
@@ -166,6 +168,8 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
     try {
       const res = await registerMutation.mutateAsync({ data: { username, password } });
       login(res.user);
+      // Verify session is established
+      await new Promise(r => setTimeout(r, 100));
       toast({ 
         title: "Identity Established", 
         description: "Dilithium keys generated. 100 QDLT awarded." 
