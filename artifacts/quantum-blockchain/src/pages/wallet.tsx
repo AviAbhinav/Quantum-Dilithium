@@ -31,8 +31,6 @@ export function Wallet() {
   
   const { toast } = useToast()
 
-  const isPending = submitMutation.isPending
-
   const otherUsers = usersData?.users.filter(u => u.id !== user?.id) || []
 
   const handleTransfer = async (e: React.FormEvent) => {
