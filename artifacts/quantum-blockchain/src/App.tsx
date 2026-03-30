@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/context/auth-context"
 import { Layout } from "@/components/layout"
 import NotFound from "@/pages/not-found"
 import { AuthPages } from "@/pages/auth"
+import { Home } from "@/pages/home"
 
 // Pages
 import { Dashboard } from "@/pages/dashboard"
@@ -43,6 +44,7 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/home" component={Home} />
       <Route path="/login" component={AuthPages} />
       <Route path="/register" component={AuthPages} />
       
@@ -59,7 +61,7 @@ function Router() {
             </Switch>
           </Layout>
         ) : (
-          <Redirect to="/login" />
+          <Redirect to="/home" />
         )}
       </Route>
     </Switch>

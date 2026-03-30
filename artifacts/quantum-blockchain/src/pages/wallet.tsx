@@ -61,9 +61,10 @@ export function Wallet() {
       }
       
     } catch (err: any) {
+      const errorMsg = err?.data?.message || err.message || "Failed to process transaction";
       toast({
         title: "Transfer Failed",
-        description: err.message || "Failed to process transaction",
+        description: errorMsg,
         variant: "destructive"
       })
     }
