@@ -69,8 +69,15 @@ export function generateTransactionId(payload: string): string {
   return computeHash(payload);
 }
 
+function stableStringify(value: unknown): string {
+  if (typeof value !== "object" || value === null) return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  const sortedKeys = Object.keys(value as object).sort();
+  return `{${sortedKeys.map(k => `${JSON.stringify(k)}:${stableStringify((value as Record<string, unknown>)[k])}`).join(",")}}`;
+}
+
 export function computeHash(...parts: unknown[]): string {
-  const content = parts.map(p => typeof p === "string" ? p : JSON.stringify(p)).join("|");
+  const content = parts.map(p => typeof p === "string" ? p : stableStringify(p)).join("|");
   return crypto.createHash("sha3-512").update(content).digest("hex");
 }
 

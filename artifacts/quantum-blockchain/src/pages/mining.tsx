@@ -19,11 +19,6 @@ export function Mining() {
   const pendingCount = pending?.count || 0
 
   const handleMine = async () => {
-    if (pendingCount === 0) {
-      toast({ title: "No Transactions", description: "Mempool is empty. Nothing to mine.", variant: "default" })
-      return
-    }
-
     try {
       setMinedBlock(null) // Reset display
       const block = await mineMutation.mutateAsync({
@@ -101,7 +96,7 @@ export function Mining() {
 
               <Button 
                 onClick={handleMine}
-                disabled={mineMutation.isPending || pendingCount === 0}
+                disabled={mineMutation.isPending}
                 className="w-full h-14 text-lg font-bold tracking-widest bg-accent/20 text-accent border border-accent shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:bg-accent/30 hover:shadow-[0_0_25px_rgba(0,243,255,0.5)] transition-all"
               >
                 {mineMutation.isPending ? (

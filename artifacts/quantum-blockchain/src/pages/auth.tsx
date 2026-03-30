@@ -106,6 +106,7 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
             </Label>
             <Input 
               id="username" 
+              autoComplete="username"
               value={username} 
               onChange={e => setUsername(e.target.value)} 
               className="bg-background/50 border-primary/20 focus-visible:border-primary font-mono"
@@ -117,7 +118,8 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
             </Label>
             <Input 
               id="password" 
-              type="password" 
+              type="password"
+              autoComplete="current-password"
               value={password} 
               onChange={e => setPassword(e.target.value)} 
               className="bg-background/50 border-primary/20 focus-visible:border-primary font-mono"
@@ -199,6 +201,7 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
             </Label>
             <Input 
               id="reg-username" 
+              autoComplete="username"
               value={username} 
               onChange={e => setUsername(e.target.value)} 
               className="bg-background/50 border-secondary/20 focus-visible:border-secondary font-mono"
@@ -210,7 +213,8 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
             </Label>
             <Input 
               id="reg-password" 
-              type="password" 
+              type="password"
+              autoComplete="new-password"
               value={password} 
               onChange={e => setPassword(e.target.value)} 
               className="bg-background/50 border-secondary/20 focus-visible:border-secondary font-mono"

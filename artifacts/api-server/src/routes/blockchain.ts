@@ -4,10 +4,6 @@ import crypto from "crypto";
 import { db } from "@workspace/db";
 import { blocksTable, pendingTransactionsTable, usersTable, type TransactionData } from "@workspace/db/schema";
 import { eq, asc, sql } from "drizzle-orm";
-
-function hashPublicKey(pk: string) {
-  return crypto.createHash("sha256").update(pk).digest("hex");
-}
 import {
   signData,
   verifySignature,
@@ -19,7 +15,10 @@ import {
   HASH_ALGORITHM,
   ENCRYPTION_ALGORITHM,
 } from "../lib/dilithium.js";
-import crypto from "crypto";
+
+function hashPublicKey(pk: string) {
+  return crypto.createHash("sha256").update(pk).digest("hex");
+}
 
 const router: IRouter = Router();
 
