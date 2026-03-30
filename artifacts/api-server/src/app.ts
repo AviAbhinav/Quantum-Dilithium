@@ -40,15 +40,18 @@ if (!sessionSecret) {
   throw new Error("SESSION_SECRET environment variable is required");
 }
 
+// 1. ADD THIS: Tell Express to trust Replit's HTTPS proxy
+app.set("trust proxy", 1);
+
 app.use(
   session({
     secret: sessionSecret,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Prevents creating empty sessions
     cookie: {
       httpOnly: true,
-      secure: process.env["NODE_ENV"] === "production",
-      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
+      secure: true,      // 2. FORCE TRUE: Required for Replit's HTTPS
+      sameSite: "none",  // 3. FORCE "none": Required for cross-site cookie usage
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),
