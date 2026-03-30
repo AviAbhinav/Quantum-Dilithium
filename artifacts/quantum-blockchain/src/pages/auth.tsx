@@ -222,7 +222,7 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
           </div>
           <Button 
             type="submit" 
-            className="w-full h-12 font-mono tracking-widest text-lg bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+            className="w-full h-12 font-mono tracking-widest text-lg bg-secondary hover:bg-secondary/90 text-black font-bold"
             disabled={registerMutation.isPending}
           >
             {registerMutation.isPending ? "GENERATING KEYS..." : "GENERATE IDENTITY"}
